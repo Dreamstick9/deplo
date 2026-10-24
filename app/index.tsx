@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from "react-native";
+import { router } from "expo-router";
 import { projects, timeAgo, statusIcon } from "../lib/data";
 
 export default function Home() {
@@ -27,7 +28,7 @@ export default function Home() {
         renderItem={({ item }) => {
           const last = item.deploys[0];
           return (
-            <View style={styles.card}>
+            <Pressable style={styles.card} onPress={() => router.push("/project/" + item.id)}>
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={{ color: item.up ? "green" : "red", fontWeight: "600" }}>
@@ -37,7 +38,7 @@ export default function Home() {
               <Text style={styles.sub}>
                 {statusIcon(last.status)} {last.commit} · {timeAgo(last.createdAt)}
               </Text>
-            </View>
+            </Pressable>
           );
         }}
       />
