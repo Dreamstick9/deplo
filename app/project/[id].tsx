@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, FlatList, Pressable, Linking } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { useLocalSearchParams, Stack, router } from "expo-router";
 import { projects, timeAgo, statusIcon } from "../../lib/data";
 
 export default function ProjectScreen() {
@@ -25,7 +25,7 @@ export default function ProjectScreen() {
         data={project.deploys}
         keyExtractor={(d) => d.id}
         renderItem={({ item }) => (
-          <View style={styles.row}>
+          <Pressable style={styles.row} onPress={() => router.push("/deploy/" + item.id)}>
             <Text style={{ fontSize: 18 }}>{statusIcon(item.status)}</Text>
             <View style={{ flex: 1, marginLeft: 10 }}>
               <Text style={{ fontWeight: "600" }}>{item.commit}</Text>
@@ -34,7 +34,7 @@ export default function ProjectScreen() {
                 {item.duration ? " · " + item.duration + "s" : ""}
               </Text>
             </View>
-          </View>
+          </Pressable>
         )}
       />
     </View>
