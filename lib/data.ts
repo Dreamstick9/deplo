@@ -66,3 +66,26 @@ export function statusIcon(s: string) {
   if (s == "failed") return "❌";
   return "⏳";
 }
+
+// fake build logs
+export function getLogs(deployId: string): string[] {
+  const lines = [
+    "Cloning repository...",
+    "Installing dependencies",
+    "npm install",
+    "added 812 packages in 21s",
+    "Running build",
+    "> next build",
+  ];
+  if (deployId == "d3") {
+    return [
+      ...lines,
+      "warn - prisma version changed",
+      "Error: Cannot find module '@prisma/client'",
+      "    at Object.<anonymous> (/app/src/db.ts:1:1)",
+      "ERR! build failed with exit code 1",
+      "Build failed",
+    ];
+  }
+  return [...lines, "Compiled successfully", "Uploading build output", "Deployed"];
+}

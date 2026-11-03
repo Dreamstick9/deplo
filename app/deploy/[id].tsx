@@ -41,6 +41,10 @@ export default function DeployScreen() {
         {project.name} · {deploy.branch} · {timeAgo(deploy.createdAt)}
       </Text>
 
+      <Pressable onPress={() => router.push("/logs/" + deploy.id)}>
+        <Text style={{ color: "#2563eb", marginTop: 14, fontWeight: "600" }}>View logs →</Text>
+      </Pressable>
+
       <View style={{ marginTop: 30 }}>
         {busy && <ActivityIndicator style={{ marginBottom: 12 }} />}
         {deploy.status == "failed" && (
