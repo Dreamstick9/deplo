@@ -1,12 +1,15 @@
-import { View, Text, StyleSheet, FlatList, Pressable, Linking } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable, Linking, RefreshControl } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
-import { projects, timeAgo, statusIcon } from "../../lib/data";
+import { timeAgo, statusIcon } from "../../lib/data";
+import { getProject } from "../../lib/api";
+import { useFetch } from "../../lib/useFetch";
 
 export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const project = projects.find((p) => p.id == id);
+  const { data: project, error, loading, reload } = useFetch(() => getProject(id), [id]);
 
-  if (!project) return <Text style={{ padding: 20 }}>project not found</Text>;
+  if (error) return <Text style={{ padding: 20 }}>{error}</Text>;
+  if (!project) return <Text style={{ padding: 20 }}>loading...</Text>;
 
   return (
     <View style={{ flex: 1 }}>
@@ -24,6 +27,7 @@ export default function ProjectScreen() {
       <FlatList
         data={project.deploys}
         keyExtractor={(d) => d.id}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} />}
         renderItem={({ item }) => (
           <Pressable style={styles.row} onPress={() => router.push("/deploy/" + item.id)}>
             <Text style={{ fontSize: 18 }}>{statusIcon(item.status)}</Text>

@@ -1,30 +1,29 @@
-import { useState } from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from "react-native";
 import { router } from "expo-router";
-import { projects, timeAgo, statusIcon } from "../lib/data";
+import { timeAgo, statusIcon } from "../lib/data";
+import { getProjects } from "../lib/api";
+import { useFetch } from "../lib/useFetch";
 
 export default function Home() {
-  const [refreshing, setRefreshing] = useState(false);
+  const { data, error, loading, reload } = useFetch(getProjects);
+  const projects = data || [];
 
   const downCount = projects.filter((p) => !p.up).length;
 
-  function onRefresh() {
-    setRefreshing(true);
-    // TODO real fetch
-    setTimeout(() => setRefreshing(false), 800);
-  }
-
   return (
     <View style={{ flex: 1 }}>
-      <View style={[styles.banner, { backgroundColor: downCount ? "#fde2e2" : "#dff5e3" }]}>
-        <Text style={styles.bannerText}>
-          {downCount ? downCount + " site down" : "all sites up"}
-        </Text>
-      </View>
+      {error && <Text style={styles.error}>cant reach server: {error}</Text>}
+      {data && (
+        <View style={[styles.banner, { backgroundColor: downCount ? "#fde2e2" : "#dff5e3" }]}>
+          <Text style={styles.bannerText}>
+            {downCount ? downCount + " site down" : "all sites up"}
+          </Text>
+        </View>
+      )}
       <FlatList
         data={projects}
         keyExtractor={(p) => p.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} />}
         renderItem={({ item }) => {
           const last = item.deploys[0];
           return (
@@ -35,9 +34,11 @@ export default function Home() {
                   {item.up ? "● up" : "● down"}
                 </Text>
               </View>
-              <Text style={styles.sub}>
-                {statusIcon(last.status)} {last.commit} · {timeAgo(last.createdAt)}
-              </Text>
+              {last && (
+                <Text style={styles.sub}>
+                  {statusIcon(last.status)} {last.commit} · {timeAgo(last.createdAt)}
+                </Text>
+              )}
             </Pressable>
           );
         }}
@@ -49,6 +50,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   banner: { padding: 14, alignItems: "center" },
   bannerText: { fontSize: 16, fontWeight: "600" },
+  error: { backgroundColor: "#fde2e2", color: "#b91c1c", padding: 12, textAlign: "center" },
   card: { backgroundColor: "#fff", marginHorizontal: 12, marginTop: 12, padding: 14, borderRadius: 10 },
   name: { fontSize: 17, fontWeight: "bold" },
   sub: { marginTop: 6, color: "#555" },

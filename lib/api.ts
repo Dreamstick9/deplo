@@ -1,42 +1,24 @@
-import { projects, Deploy } from "./data";
+import { Project, Deploy } from "./data";
 
-// fake actions, just changes the local data for now
+// on a real phone use your laptop ip, like http://192.168.1.5:4000
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000";
 
-function wait(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+async function req(path: string, method = "GET", body?: any) {
+  const res = await fetch(API_URL + path, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "request failed");
+  return data;
 }
 
-export function findDeploy(id: string) {
-  for (const p of projects) {
-    const d = p.deploys.find((x) => x.id == id);
-    if (d) return { project: p, deploy: d };
-  }
-  return null;
-}
+export const getProjects = (): Promise<Project[]> => req("/projects");
+export const getProject = (id: string): Promise<Project> => req("/projects/" + id);
+export const getDeploy = (id: string): Promise<Deploy> => req("/deploys/" + id);
+export const getLogs = (id: string): Promise<{ lines: string[] }> => req("/deploys/" + id + "/logs");
 
-export async function redeploy(deployId: string) {
-  const found = findDeploy(deployId);
-  if (!found) throw new Error("deploy not found");
-  await wait(600);
-  const d: Deploy = {
-    id: "d" + Date.now(),
-    status: "building",
-    commit: found.deploy.commit,
-    branch: found.deploy.branch,
-    createdAt: Date.now(),
-  };
-  found.project.deploys.unshift(d);
-  return d;
-}
-
-// retry is same thing as redeploy basically
+export const redeploy = (id: string) => req("/deploys/" + id + "/redeploy", "POST");
 export const retry = redeploy;
-
-export async function rollback(deployId: string) {
-  const found = findDeploy(deployId);
-  if (!found) throw new Error("deploy not found");
-  await wait(600);
-  // move this deploy to the top so it counts as current
-  found.project.deploys = [found.deploy, ...found.project.deploys.filter((d) => d.id != deployId)];
-  found.project.up = true;
-}
+export const rollback = (id: string) => req("/deploys/" + id + "/rollback", "POST");

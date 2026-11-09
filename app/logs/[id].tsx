@@ -2,7 +2,8 @@ import { useRef } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, Share } from "react-native";
 import type { ScrollViewInstance } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
-import { getLogs } from "../../lib/data";
+import { getLogs } from "../../lib/api";
+import { useFetch } from "../../lib/useFetch";
 
 function isError(line: string) {
   const l = line.toLowerCase();
@@ -11,7 +12,8 @@ function isError(line: string) {
 
 export default function LogsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const lines = getLogs(id).slice(-200);
+  const { data } = useFetch(() => getLogs(id), [id]);
+  const lines = data ? data.lines : [];
   const scroll = useRef<ScrollViewInstance>(null);
   const positions = useRef<number[]>([]);
 
