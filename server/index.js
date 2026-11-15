@@ -6,6 +6,29 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// push tokens from phones
+let devices = []
+
+async function sendPush(title, body, url) {
+  if (devices.length == 0) return
+  const msgs = devices.map((to) => ({ to, title, body, sound: "default", data: { url } }))
+  try {
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(msgs),
+    })
+  } catch (e) {
+    console.log("push failed", e.message)
+  }
+}
+
+app.post("/devices", (req, res) => {
+  const token = req.body.token
+  if (token && !devices.includes(token)) devices.push(token)
+  res.json({ ok: true })
+})
+
 function deploysFor(projectId) {
   return db.deploys.filter((d) => d.projectId == projectId).sort((a, b) => b.createdAt - a.createdAt)
 }
@@ -47,6 +70,7 @@ app.post("/deploys/:id/redeploy", (req, res) => {
     nd.duration = 20
     const p = db.projects.find((x) => x.id == nd.projectId)
     if (p) p.up = true
+    sendPush("Deploy finished", (p ? p.name : "") + " · " + nd.commit, "/deploy/" + nd.id)
   }, 20000)
 
   res.json(nd)
@@ -66,6 +90,7 @@ async function checkSites() {
   for (const p of db.projects) {
     try {
       const r = await fetch(p.url, { method: "HEAD", signal: AbortSignal.timeout(5000) })
+      if (p.up && !r.ok) sendPush(p.name + " is down", p.url + " returned " + r.status, "/project/" + p.id)
       p.up = r.ok
     } catch (e) {
       // fake domains wont resolve, so keep whatever it was
