@@ -19,7 +19,9 @@ export default function Layout() {
   return (
     <>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerTitle: "deplo" }} />
+      <Stack>
+        <Stack.Screen name="index" options={{ title: "deplo" }} />
+      </Stack>
     </>
   );
 }
